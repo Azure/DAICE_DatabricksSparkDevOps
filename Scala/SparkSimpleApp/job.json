@@ -1,0 +1,18 @@
+{
+  "name": "Example Job to Run Deployed Jar",
+  "new_cluster": {
+    "spark_version": "5.3.x-scala2.11",
+    "node_type_id": "Standard_DS3_v2",
+    "num_workers": 1
+  },
+  "libraries": [
+    {
+      "jar": "dbfs:__REPLACE_WITH_JAR_PATH__"
+    }
+  ],
+  "timeout_seconds": 3600,
+  "max_retries": 1,
+  "spark_jar_task": {
+    "main_class_name": "com.microsoft.spark.example.SparkSimpleApp"
+  }
+}

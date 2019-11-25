@@ -1,0 +1,19 @@
+{
+  "name": "Example Job to Run Deployed Egg",
+  "new_cluster": {
+    "spark_version": "5.3.x-scala2.11",
+    "node_type_id": "Standard_DS3_v2",
+    "num_workers": 1
+  },
+  "libraries": [
+    {
+      "egg": "dbfs:/FileStore/jars/67dd8695_e72b_4872_9f0b_b722fced6252-sparksimpleapp_1_0_0_py3_6-277b3.egg"
+    }
+  ],
+  "timeout_seconds": 3600,
+  "max_retries": 1,
+  "spark_python_task": {
+    "python_file": "dbfs:/mnt/input/py/main.py",
+    "parameters": ["/mnt/input/bank/bank.csv", "/mnt/output/SparkSimpleAppPY/test.csv"]
+  }
+}
