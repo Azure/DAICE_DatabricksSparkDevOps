@@ -49,7 +49,9 @@ In the build pipeline, you are going to create the Jar as an artifact produced b
 
 The release pipeline allows you to deploy your jar or egg job to your target compute: Databricks Spark.  Create your Release pipeline by going to Pipelines > Releases > + New Release Pipeline.  Start with an Empty Job.
 
-!['Release Pipeline Artifacts'](./docs/img/artifacts-release.png)
+<p align="center">
+  <img src="./docs/img/artifacts-release.PNG" alt="Release Pipeline Artifacts">
+</p>
 
 * Add two artifacts:
   * Build: Choose the source build pipeline, default verison of Latest and default Source Alias (`_ScalaSpark_App_Build` or `_Pypark_App_Build`).
@@ -75,7 +77,9 @@ The release pipeline allows you to deploy your jar or egg job to your target com
 
 ### Release Scala Databricks
 
-!['Release Tasks for Scala Jar'](./docs/img/dbr-jar-release.png)
+<p align="center">
+  <img src="./docs/img/dbr-jar-release.PNG" alt="Release Tasks for Scala Jar">
+</p>
 
 Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this once in QA and then Clone the stage and rename).
 
@@ -96,6 +100,7 @@ Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this
 1. Python Script
    * Script Source: File Path
    * Script Path: `$(System.DefaultWorkingDirectory)/_code/deployment.py`
+   * Arguments: 
   
   ```
   jar $(System.DefaultWorkingDirectory)/_ScalaSpark_App_Build/drop/Scala/SparkSimpleApp/target dbfs:/mnt/jars $(System.DefaultWorkingDirectory)/_code/Scala/SparkSimpleApp/job.json --main-class com.microsoft.spark.example.SparkSimpleApp --parameters "/mnt/input/bank/bank.csv" "/mnt/output/SparkSimpleAppPY/test.csv" --profile AZDO
@@ -105,7 +110,9 @@ You now have a working release pipeline!  Save and execute the Release!
 
 ### Release Egg Databricks
 
-!['Release Tasks for Python Egg'](./docs/img/dbr-egg-release.png)
+<p align="center">
+  <img src="./docs/img/dbr-egg-release.PNG" alt="Release Tasks for Python Egg">
+</p>
 
 Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this once in QA and then Clone the stage and rename).
 
@@ -130,6 +137,7 @@ Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this
 1. Python Script
     * Script Source: File Path
     * Script Path: `$(System.DefaultWorkingDirectory)/_code/deployment.py`
+    * Arguments: 
   
   ```
   egg $(System.DefaultWorkingDirectory)/_Pyspark_App_Build/dist/ dbfs:/mnt/jars $(System.DefaultWorkingDirectory)/_code/Python/SparkSimpleApp/job.json --python-file "dbfs:/mnt/jars/main.py" --parameters "/mnt/input/bank/bank.csv" "/mnt/output/SparkSimpleAppPY/test.csv" --profile AZDO
