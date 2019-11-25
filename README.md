@@ -49,7 +49,7 @@ In the build pipeline, you are going to create the Jar as an artifact produced b
 
 The release pipeline allows you to deploy your jar or egg job to your target compute: Databricks Spark.  Create your Release pipeline by going to Pipelines > Releases > + New Release Pipeline.  Start with an Empty Job.
 
-!['Release Pipeline Artifacts'](docs/img/artifacts-release.png)
+!['Release Pipeline Artifacts'](./docs/img/artifacts-release.png)
 
 * Add two artifacts:
   * Build: Choose the source build pipeline, default verison of Latest and default Source Alias (`_ScalaSpark_App_Build` or `_Pypark_App_Build`).
@@ -75,7 +75,7 @@ The release pipeline allows you to deploy your jar or egg job to your target com
 
 ### Release Scala Databricks
 
-!['Release Tasks for Scala Jar'](docs/img/dbr-jar-release.png)
+!['Release Tasks for Scala Jar'](./docs/img/dbr-jar-release.png)
 
 Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this once in QA and then Clone the stage and rename).
 
@@ -105,7 +105,7 @@ You now have a working release pipeline!  Save and execute the Release!
 
 ### Release Egg Databricks
 
-!['Release Tasks for Python Egg'](docs/img/dbr-egg-release.png)
+!['Release Tasks for Python Egg'](./docs/img/dbr-egg-release.png)
 
 Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this once in QA and then Clone the stage and rename).
 
