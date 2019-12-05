@@ -9,6 +9,16 @@
     * `/mnt/output`
 1. You are familiar with either Scala or Python.
 
+## Table of Contents
+* [Scala Jar App Build Pipeline](#scalaspark_app_build)
+* [Python Egg App Build Pipeline](#pyspark_app_build)
+* [Scala Jar App Release Pipeline](#release-scala-databricks)
+* [Python Egg App Release Pipeline](#release-egg-databricks)
+* [Python Notebook Release Pipeline](#release-python-notebook)
+
+## Useful DevOps concepts
+* [Release and Approval Gates](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/approvals/?view=azure-devops) to control when a code release hits your environment and ask for approval from leadership before deployment.
+
 ## Build Pipeline
 
 ### ScalaSpark_App_Build
@@ -144,6 +154,34 @@ Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this
   ```
 
 You now have a working release pipeline!  Save and execute the Release!
+
+### Release Python Notebook
+
+<p align="center">
+  <img src="./docs/img/dbr-py-notebook-release.PNG" alt="Release Tasks for Python Notebook">
+</p>
+
+For a Python notebook, we do not have a build process since no egg package is being created.  We can release the notebook immediately, however that leaves you open to logic errors.  Consider following the guidance from [Alexandre Gattiker](https://cloudarchitected.com/2019/11/unit-testing-databricks-notebooks/).  In this example, we assume the notebook is valid and can be pushed to QA and manually reviewed in that workspace.
+
+Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this once in QA and then Clone the stage and rename).
+
+1. Use Python Version 
+    * Set Version Spec to 3.6
+1. Configure Databricks (from Microsoft DevLabs)
+   * Set Workspace URL to `https://$(DATABRICKS_REGION).azuredatabricks.net`
+   * Set Access Token to `$(DATABRICKS_TOKEN)`
+   * This creates a Databricks configuration profile of `AZDO`.  We pass this to the deployment.py file.
+1. Deploy Databricks Notebook
+   * Set Notebooks Folder to `$(System.DefaultWorkingDirectory)/_code/Notebook`
+   * Set Workspace Folder to `/Shared`
+   * This will recreate the entire `_code/Notebook` structure (notebooks and folders) in the `/Shared/` folder in Databricks.
+
+To add further to this example, you might:
+* Deploy your notebook to a versioned folder number based on the [Pre-defined release variable](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/variables?view=azure-devops&tabs=batch#default-variables) of `Release.DeploymentID`.
+* Update an existing job and point to the new versioned folder.
+* Execute the notebook with the Microsoft DevLabs extension task.
+
+You now have a working pipeline to deploy Azure Databricks Notebooks!  Save and execute the Release!
 
 # deployment.py
 
