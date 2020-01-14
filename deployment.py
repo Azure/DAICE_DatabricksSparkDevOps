@@ -42,11 +42,6 @@ if __name__ == "__main__":
         help="The python file that runs the python application")
     parser.add_argument('--main-class',
         help="The main class of your scala jar application")
-    parser.add_argument('--parameters',
-        nargs='*',
-        default = [],
-        help="List of parameters that get passed directly to the spark jar / python task"
-    )
     parser.add_argument('--profile',
         default=None,
         help="Profile name to be passed to the databricks CLI"
@@ -55,6 +50,11 @@ if __name__ == "__main__":
         nargs=2,
         default=None,
         help="Looks for a job_id or name (useful only for Databricks deployments)"
+    )
+    parser.add_argument('--parameters',
+        nargs=argparse.REMAINDER,
+        default = [],
+        help="List of parameters that get passed directly to the spark jar / python task.  This must be the last parameter."
     )
     args = parser.parse_args()
 

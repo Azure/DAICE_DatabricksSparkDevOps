@@ -113,7 +113,7 @@ Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this
    * Arguments: 
   
   ```
-  jar $(System.DefaultWorkingDirectory)/_ScalaSpark_App_Build/drop/Scala/SparkSimpleApp/target dbfs:/mnt/jars $(System.DefaultWorkingDirectory)/_code/Scala/SparkSimpleApp/job.json --main-class com.microsoft.spark.example.SparkSimpleApp --parameters "/mnt/input/bank/bank.csv" "/mnt/output/SparkSimpleAppPY/test.csv" --profile AZDO
+  jar $(System.DefaultWorkingDirectory)/_ScalaSpark_App_Build/drop/Scala/SparkSimpleApp/target dbfs:/mnt/jars $(System.DefaultWorkingDirectory)/_code/Scala/SparkSimpleApp/job.json --main-class com.microsoft.spark.example.SparkSimpleApp --profile AZDO --parameters "/mnt/input/bank/bank.csv" "/mnt/output/SparkSimpleAppPY/test.csv"
   ```
 
 You now have a working release pipeline!  Save and execute the Release!
@@ -150,7 +150,7 @@ Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this
     * Arguments: 
   
   ```
-  egg $(System.DefaultWorkingDirectory)/_Pyspark_App_Build/dist/ dbfs:/mnt/jars $(System.DefaultWorkingDirectory)/_code/Python/SparkSimpleApp/job.json --python-file "dbfs:/mnt/jars/main.py" --parameters "/mnt/input/bank/bank.csv" "/mnt/output/SparkSimpleAppPY/test.csv" --profile AZDO
+  egg $(System.DefaultWorkingDirectory)/_Pyspark_App_Build/dist/ dbfs:/mnt/jars $(System.DefaultWorkingDirectory)/_code/Python/SparkSimpleApp/job.json --python-file "dbfs:/mnt/jars/main.py" --profile AZDO --parameters "/mnt/input/bank/bank.csv" "/mnt/output/SparkSimpleAppPY/test.csv" 
   ```
 
 You now have a working release pipeline!  Save and execute the Release!
@@ -191,10 +191,9 @@ The help file below describes the usage.
 
 ```
 usage: deployment.py [-h] [--python-file PYTHON_FILE]
-                     [--main-class MAIN_CLASS]
-                     [--parameters [PARAMETERS [PARAMETERS ...]]]
-                     [--profile PROFILE]
-                     [--update-if-exists UPDATE_IF_EXISTS UPDATE_IF_EXISTS]  
+                     [--main-class MAIN_CLASS] [--profile PROFILE]
+                     [--update-if-exists UPDATE_IF_EXISTS UPDATE_IF_EXISTS]
+                     [--parameters ...]
                      {jar,egg} library_path cloud_path job_json
 
 Deploy a set of jar or egg files as a Spark application
@@ -213,11 +212,11 @@ optional arguments:
                         The python file that runs the python application
   --main-class MAIN_CLASS
                         The main class of your scala jar application
-  --parameters [PARAMETERS [PARAMETERS ...]]
-                        List of parameters that get passed directly to the
-                        spark jar / python task
   --profile PROFILE     Profile name to be passed to the databricks CLI
   --update-if-exists UPDATE_IF_EXISTS UPDATE_IF_EXISTS
                         Looks for a job_id or name (useful only for Databricks
                         deployments)
+  --parameters ...      List of parameters that get passed directly to the
+                        spark jar / python task. This must be the last
+                        parameter.
 ```
