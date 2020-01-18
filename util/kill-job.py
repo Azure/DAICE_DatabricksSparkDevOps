@@ -69,7 +69,7 @@ if __name__ == "__main__":
     print("There are {} jobs being considered".format(len(runs_by_job)))
 
     if args.id:
-        runs = [runs for (job_id, job_name), runs in runs_by_job.items() if args.id == job_id]
+        runs = [runs for (job_id, job_name), runs in runs_by_job.items() if int(args.id) == job_id]
     elif args.name:
         runs = [runs for (job_id, job_name), runs in runs_by_job.items() if args.name == job_name]
     
