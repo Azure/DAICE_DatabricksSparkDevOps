@@ -96,28 +96,42 @@ if __name__ == "__main__":
         job_def[objective_task_name].update(
             {"parameters":args.parameters}
         )
+    
+    PROFILE_EXTENSION = ['--profile', args.profile] if args.profile else []
 
     # Look to see if the job exists already (title or jar or id)
-    JOB_EXISTS = None
+    EXISTING_JOB = None
     CLI_VERB = 'create'
     if args.update_if_exists:
-        cli_output = subprocess.run(['databricks', 'jobs', 'list'], stdout=subprocess.PIPE).stdout
+        cli_output = subprocess.run(
+            ['databricks', 'jobs', 'list'] + PROFILE_EXTENSION, 
+            stdout=subprocess.PIPE
+        ).stdout
+
         jobs_on_databricks = parse_jobs_list(cli_output)
 
         if args.update_if_exists[0] == "job_id":
             if args.update_if_exists[1] in jobs_on_databricks.keys():
-                JOB_EXISTS = args.update_if_exists[1]
+                EXISTING_JOB = args.update_if_exists[1]
         elif args.update_if_exists[0] == "name":
             if args.update_if_exists[1] in jobs_on_databricks.values():
                 candidate_jobs = list(filter(
                     lambda tup: tup[1] == args.update_if_exists[1],
                     jobs_on_databricks.items()
                 ))
-                JOB_EXISTS = candidate_jobs[0][0]
+                # Results from Databricks output are not sorted by job_id
+                # Assuming you want to update the most recent job_id
+                candidate_jobs = sorted(
+                    candidate_jobs, 
+                    key=lambda x: int(x[0]), 
+                    reverse=True
+                )
+
+                EXISTING_JOB = candidate_jobs[0][0]
     
-    if JOB_EXISTS:
-        print("Print job {}: {} exists.  Updating specifications".format(
-            JOB_EXISTS, jobs_on_databricks[JOB_EXISTS]
+    if EXISTING_JOB:
+        print("Job {}: {} exists.  Updating specifications".format(
+            EXISTING_JOB, jobs_on_databricks[EXISTING_JOB]
         ))
         CLI_VERB = 'reset'
 
@@ -127,14 +141,38 @@ if __name__ == "__main__":
     # Create the job on databricks or edit existing
     deployment_command = ['databricks', 'jobs', CLI_VERB, '--json', json.dumps(job_def)]
     if CLI_VERB == 'reset':
-        deployment_command.extend( ['--job-id', JOB_EXISTS])
+        deployment_command.extend( ['--job-id', EXISTING_JOB])
     
-    if args.profile:
-        deployment_command.extend( ['--profile', args.profile])
+    # Add any profile options to the command if it's present in args.profile
+    deployment_command.extend( PROFILE_EXTENSION )
     
     print('Attempting to run:\n{}'.format(' '.join(deployment_command)))
-    call_results = subprocess.run(deployment_command, stdout=subprocess.PIPE).stdout
-    print(call_results)
+    output_job_id = None
+    
+    call_results_json = subprocess.run(deployment_command, stdout=subprocess.PIPE).stdout
+
+    # If we are creating a new job, databricks cli returns a json output
+    # Parse the output and store the job_id
+    if CLI_VERB == 'create':
+        try:
+            call_results = json.loads(
+                call_results_json.decode('utf-8').replace('\r\n','\n')
+            )
+            output_job_id = call_results.get("job_id")
+
+        except Exception as e:
+            print(e)
+            print("Original JSON: {}".format(call_results_json) )
+            raise e
+
+    # Select the job id from either the existing job or created job
+    resulting_job_id = EXISTING_JOB or output_job_id
+    print("Succeeded in performing {} with job_id {}".format(
+        CLI_VERB, resulting_job_id
+    ))
+
+    # This prints a specific format for Azure DevOps to pick up output as a variable
+    print("##vso[task.setvariable variable=DBR_JOB_ID]{}".format(resulting_job_id))
 
 
 
