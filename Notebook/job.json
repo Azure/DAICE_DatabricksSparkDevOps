@@ -1,0 +1,10 @@
+{
+    "name": "Example Job to Run a Notebook",
+    "new_cluster": {
+      "spark_version": "6.2.x-scala2.11",
+      "node_type_id": "Standard_DS3_v2",
+      "num_workers": 1
+    },
+    "timeout_seconds": 3600,
+    "max_retries": 1
+  }

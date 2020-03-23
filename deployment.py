@@ -30,18 +30,20 @@ if __name__ == "__main__":
     )
     parser.add_argument('objective',
         default="jar",
-        choices=["jar","egg"],
-        help="Valid options are jar or egg")
+        choices=["jar","egg", "notebook"],
+        help="Valid options are jar, egg, or notebook")
     parser.add_argument('library_path',
-        help="The library or folder containing libraries to include")
+        help="The library or folder containing libraries to include. Use na for no libraries.")
     parser.add_argument('cloud_path',
-        help="The path in the cloud (e.g. DBFS, WASB) that the library is located")
+        help="The path in the cloud (e.g. DBFS, WASB) that the library is located. Use na for no libraries.")
     parser.add_argument('job_json',
         help="The path to the job definition (only applicable to Databricks)")
     parser.add_argument('--python-file',
-        help="The python file that runs the python application")
+        help="(egg option) The python file that runs the python application")
     parser.add_argument('--main-class',
-        help="The main class of your scala jar application")
+        help="(jar option) The main class of your scala jar application")
+    parser.add_argument('--notebook-path',
+        help="(notebook option)The path to your notebook in your databricks workspace")
     parser.add_argument('--profile',
         default=None,
         help="Profile name to be passed to the databricks CLI"
@@ -58,41 +60,67 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    map_objective_to_task = {
+        "jar": "spark_jar_task",
+        "egg": "spark_python_task",
+        "notebook": "notebook_task"
+    }
+
     with open(args.job_json, 'r') as jobfp:
         job_def = json.load(jobfp)
     
+    # If the library path attribute is na then skip adding libraries
     # Is it one or many objects to install as libraries?
-    if os.path.isdir(args.library_path):
-        # Directory path specified, grab all files of type args.objective
-        # TODO: Decide if this should be recursive or not?
-        all_packages = [
-            p for p in os.listdir(args.library_path) 
-                if os.path.splitext(p)[1] == '.' + args.objective
+    if args.library_path.strip().lower() != "na":
+        if os.path.isdir(args.library_path):
+            # Directory path specified, grab all files of type args.objective
+            # TODO: Decide if this should be recursive or not?
+            all_packages = [
+                p for p in os.listdir(args.library_path) 
+                    if os.path.splitext(p)[1] == '.' + args.objective
+            ]
+        else:
+            all_packages = [args.library_path]
+        
+        # Get the library's name and it's destination folder
+        # Replace the job.json's content
+        job_def["libraries"] = [
+            {args.objective: posixpath.join(args.cloud_path, package)} for package in all_packages
         ]
-    else:
-        all_packages = [args.library_path]
-    
-    # Get the Jar's name and it's destination folder
-    # Replace the job.json's content
-    job_def["libraries"] = [
-        {args.objective: posixpath.join(args.cloud_path, package)} for package in all_packages
-    ]
 
-    # If it's an egg, we use spark_python_task, otherwise it's spark_jar_task
-    objective_task_name = "spark_python_task" if args.objective == "egg" else "spark_jar_task"
-    if args.objective == "egg":
+    # Get the task type based on the passed in objective
+    objective_task_name = map_objective_to_task[args.objective]
+    if objective_task_name == "spark_python_task":
         # You need a python_file to run the app
         job_def[objective_task_name] = {
             "python_file": args.python_file
         }
-    else:
+    elif objective_task_name == "spark_jar_task":
         # You need a main_class_name to run the app
         job_def[objective_task_name] = {
             "main_class_name": args.main_class
         }
+    else:
+        # Assuming notebook task
+        job_def[objective_task_name] = {
+            "notebook_path": args.notebook_path
+        }
+        # Adding in parameters if they are available
+        if args.parameters:
+            # Assuming --parameters key1 value1 key2 value2
+            # If it's not an even set of pairs
+            if len(args.parameters) % 2 != 0:
+                raise IndexError("Parameters passed into a notebook task must be an even number of attributes as it assumes key, value pairs")
+            
+            pair_indexes = [x for x in range(len(args.parameters)) if x %2 == 0]
+            
+            job_def[objective_task_name].update(
+                {"base_parameters": {args.parameters[x]:args.parameters[x+1] for x in pair_indexes }}
+            )
     
+    # Back to the main flow
     # Parameters is an attribute across egg and jar tasks
-    if args.parameters:
+    if args.parameters and objective_task_name != "notebook_task":
         job_def[objective_task_name].update(
             {"parameters":args.parameters}
         )
@@ -170,10 +198,8 @@ if __name__ == "__main__":
     print("Succeeded in performing {} with job_id {}".format(
         CLI_VERB, resulting_job_id
     ))
-
-    # This prints a specific format for Azure DevOps to pick up output as a variable
-    print("##vso[task.setvariable variable=DBR_JOB_ID]{}".format(resulting_job_id))
-
-
-
-    
+    if call_results_json.decode('utf-8').lower().startswith("error"):
+        raise Exception("The Databricks Job deployment failed with error: {}".format(call_results_json.decode('utf-8')))
+    else:    
+      # This prints a specific format for Azure DevOps to pick up output as a variable
+      print("##vso[task.setvariable variable=DBR_JOB_ID]{}".format(resulting_job_id))

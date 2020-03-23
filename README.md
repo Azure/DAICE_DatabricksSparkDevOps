@@ -175,6 +175,14 @@ Add the following tasks to both the QA and Prod stages (Pro Tip: You can do this
    * Set Notebooks Folder to `$(System.DefaultWorkingDirectory)/_code/Notebook`
    * Set Workspace Folder to `/Shared`
    * This will recreate the entire `_code/Notebook` structure (notebooks and folders) in the `/Shared/` folder in Databricks.
+1. Python Script
+    * Script Source: File Path
+    * Script Path: `$(System.DefaultWorkingDirectory)/_code/deployment.py`
+    * Arguments: 
+  
+  ```
+  notebook na na $(System.DefaultWorkingDirectory)/_code/Notebook/job.json --notebook-path "/SparkSimpleNotebook" --profile AZDO --parameters "input" "/mnt/input/bank/bank.csv" "output" "/mnt/output/SparkSimpleAppNotebook/test" 
+  ``` 
 
 To add further to this example, you might:
 * Deploy your notebook to a versioned folder number based on the [Pre-defined release variable](https://docs.microsoft.com/en-us/azure/devops/pipelines/release/variables?view=azure-devops&tabs=batch#default-variables) of `Release.DeploymentID`.
@@ -182,6 +190,22 @@ To add further to this example, you might:
 * Execute the notebook with the Microsoft DevLabs extension task.
 
 You now have a working pipeline to deploy Azure Databricks Notebooks!  Save and execute the Release!
+
+## Additional Functionality
+
+### Update an Existing Job by Name or Job_ID
+
+This deployment script does NOT help with identifying existing jobs and shutting them down.
+
+Instead, you can specify the `--update-if-exists` flag to change an existing job if it is found.
+
+You can either pass `--update-if-exists job_id XXX` with XXX being a known job-id and it will update the job found when looking up job-id XXX.
+
+Alternatively, you can pass in the name of the job like `--update-if-exists name my_job_name`.  This will look up the job-id for the first match it finds (ordering not guaranteed) based on the name of the job.  The downsides are:
+* Databricks allows for multiple jobs to share the same name (why?!?)
+* The output of `databricks jobs list` seems to be smaller job-id first.
+* You could miss existing active jobs with schedules if they have later job-id's and the same name.
+
 
 # deployment.py
 
@@ -191,27 +215,34 @@ The help file below describes the usage.
 
 ```
 usage: deployment.py [-h] [--python-file PYTHON_FILE]
-                     [--main-class MAIN_CLASS] [--profile PROFILE]
+                     [--main-class MAIN_CLASS] [--notebook-path NOTEBOOK_PATH]
+                     [--profile PROFILE]
                      [--update-if-exists UPDATE_IF_EXISTS UPDATE_IF_EXISTS]
                      [--parameters ...]
-                     {jar,egg} library_path cloud_path job_json
+                     {jar,egg,notebook} library_path cloud_path job_json
 
 Deploy a set of jar or egg files as a Spark application
 
 positional arguments:
-  {jar,egg}             Valid options are jar or egg
-  library_path          The library or folder containing libraries to include
+  {jar,egg,notebook}    Valid options are jar, egg, or notebook
+  library_path          The library or folder containing libraries to include.
+                        Use na for no libraries.
   cloud_path            The path in the cloud (e.g. DBFS, WASB) that the
-                        library is located
+                        library is located. Use na for no libraries.
   job_json              The path to the job definition (only applicable to
                         Databricks)
 
 optional arguments:
   -h, --help            show this help message and exit
   --python-file PYTHON_FILE
-                        The python file that runs the python application
+                        (egg option) The python file that runs the python
+                        application
   --main-class MAIN_CLASS
-                        The main class of your scala jar application
+                        (jar option) The main class of your scala jar
+                        application
+  --notebook-path NOTEBOOK_PATH
+                        (notebook option)The path to your notebook in your
+                        databricks workspace
   --profile PROFILE     Profile name to be passed to the databricks CLI
   --update-if-exists UPDATE_IF_EXISTS UPDATE_IF_EXISTS
                         Looks for a job_id or name (useful only for Databricks
