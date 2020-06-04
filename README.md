@@ -206,6 +206,21 @@ Alternatively, you can pass in the name of the job like `--update-if-exists name
 * The output of `databricks jobs list` seems to be smaller job-id first.
 * You could miss existing active jobs with schedules if they have later job-id's and the same name.
 
+### Using LIVY to deploy to Spark Cluster (Not Databricks)
+
+This repository focuses on Databricks but HDInsight or other Spark clusters may need some DevOps work as well.  Below is an example using LIVY to trigger a job.
+
+```
+curl -k --user "<USER>:<PASSWORD>" -v -H "Content-Type: application/json" -X POST -d \
+'{ "file":"<YOUR JAR APPLICATION>", \
+"className":"<YOUR MAIN CLASS", \
+"args":["<OPTIONAL ARG 1>", "<OPTIONAL ARG N>"] }' \
+'https://<YOUR CULSTER URL>/livy/batches' \
+-H "X-Requested-By : <USER>"
+```
+
+
+
 
 # deployment.py
 
